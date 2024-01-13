@@ -22,6 +22,15 @@ Token Transfer: Executes the actual transfer of tokens between the user and the 
 */
 
 contract TokenSwap {
+    /////////Errors//////////
+    error InsufficientAmount();
+    error InsufficientTokenABalance();
+    error InsufficientTokenBBalance();
+    error InsufficientContractTokenABalance();
+    error InsufficientContractTokenBBalance();
+    error TokenATransferFailed();
+    error TokenBTransferFailed();
+
     ////////Events///////////
 
     event TokensSwapped(address indexed user, address indexed fromToken, address indexed toToken, uint256 amount);
@@ -43,29 +52,37 @@ contract TokenSwap {
     ///////////Functions////////////
 
     function swapAToB(uint256 amount) external {
-        require(amount > 0, "Amount <= zero");
+        if (amount <= 0) revert InsufficientAmount();
 
         uint256 tokenBAmount = (amount * exchangeRate) / 1e18;
 
-        require(tokenA.balanceOf(msg.sender) >= amount, "Insufficient Token A");
-        require(tokenB.balanceOf(address(this)) >= tokenBAmount, "Insufficient Token B in contract");
+        if (tokenA.balanceOf(msg.sender) < amount) revert InsufficientTokenABalance();
+        if (tokenB.balanceOf(address(this)) < tokenBAmount) {
+            revert InsufficientContractTokenBBalance();
+        }
 
-        require(tokenA.transferFrom(msg.sender, address(this), amount), "Token A Transfer failed");
-        require(tokenB.transfer(msg.sender, tokenBAmount), "Token B Transfer failed");
+        if (!tokenA.transferFrom(msg.sender, address(this), amount)) {
+            revert TokenATransferFailed();
+        }
+        if (!tokenB.transfer(msg.sender, tokenBAmount)) revert TokenBTransferFailed();
 
         emit TokensSwapped(msg.sender, address(tokenA), address(tokenB), amount);
     }
 
     function swapBToA(uint256 amount) external {
-        require(amount > 0, "Amount <= zero");
+        if (amount <= 0) revert InsufficientAmount();
 
         uint256 tokenAAmount = (amount * 1e18) / exchangeRate;
 
-        require(tokenB.balanceOf(msg.sender) >= amount, "Insufficient Token B");
-        require(tokenA.balanceOf(address(this)) >= tokenAAmount, "Insufficient Token A in contract");
+        if (tokenB.balanceOf(msg.sender) < amount) revert InsufficientTokenBBalance();
+        if (tokenA.balanceOf(address(this)) < tokenAAmount) {
+            revert InsufficientContractTokenABalance();
+        }
 
-        require(tokenB.transferFrom(msg.sender, address(this), amount), "Token B Transfer failed");
-        require(tokenA.transfer(msg.sender, tokenAAmount), "Token A Transfer failed");
+        if (!tokenB.transferFrom(msg.sender, address(this), amount)) {
+            revert TokenBTransferFailed();
+        }
+        if (!tokenA.transfer(msg.sender, tokenAAmount)) revert TokenATransferFailed();
 
         emit TokensSwapped(msg.sender, address(tokenB), address(tokenA), amount);
     }

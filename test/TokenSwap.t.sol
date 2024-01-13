@@ -99,10 +99,10 @@ contract TokenSwapTest is DSTest {
     //testing for zero amount
     function testFailSwapWithZeroAmount() public {
         uint256 amountToSwap = 0;
-        vm.expectRevert("Amount <= zero");
+        vm.expectRevert(abi.encodeWithSignature("InsufficientAmount()"));
         tokenSwap.swapAToB(amountToSwap);
 
-        vm.expectRevert("Amount <= zero");
+        vm.expectRevert(abi.encodeWithSignature("InsufficientAmount()"));
         tokenSwap.swapBToA(amountToSwap);
     }
 
@@ -117,12 +117,12 @@ contract TokenSwapTest is DSTest {
     function testSwapMoreThanBalance() public {
         uint256 amountToSwap = tokenA.balanceOf(address(this)) + 1;
 
-        vm.expectRevert("Insufficient Token A");
+        vm.expectRevert(abi.encodeWithSignature("InsufficientTokenABalance()"));
         tokenSwap.swapAToB(amountToSwap);
 
         uint256 _amountToSwap = tokenB.balanceOf(address(this)) + 1;
 
-        vm.expectRevert("Insufficient Token B");
+        vm.expectRevert(abi.encodeWithSignature("InsufficientTokenBBalance()"));
         tokenSwap.swapBToA(_amountToSwap);
     }
 
@@ -130,12 +130,12 @@ contract TokenSwapTest is DSTest {
     function testSwapInsufficientContractBalance() public {
         uint256 amountToSwap = 600 * 1e18;
 
-        vm.expectRevert("Insufficient Token B in contract");
+        vm.expectRevert(abi.encodeWithSignature("InsufficientContractTokenBBalance()"));
         tokenSwap.swapAToB(amountToSwap);
 
         uint256 _amountToSwap = 600 * 1e18;
 
-        vm.expectRevert("Insufficient Token A in contract");
+        vm.expectRevert(abi.encodeWithSignature("InsufficientContractTokenABalance()"));
         tokenSwap.swapBToA(_amountToSwap);
     }
 
